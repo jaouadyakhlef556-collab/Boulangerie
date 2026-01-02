@@ -686,6 +686,26 @@
           .actualidade-section {
             width: 100%;
           }
+          
+           menu-image-section img {
+            width: 100%;
+            max-width: 100%;
+            border-radius: 15px;
+            object-fit: contain;
+            background-color: #fff;
+          }
+ 
+          .actualidade-section {
+            width: 100%;
+            background: var(--glass);
+            border: var(--border-glow);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(15px);
+           -webkit-backdrop-filter: blur(15px);
+          }
+            
+          }
   </style>
 </head>
 
@@ -728,21 +748,32 @@
   </section>
 
   <section id="menu" class="menu-section parallax-bg">
-    <h2 class="section-title">Menu & Actualités</h2>
+  <h2 class="section-title">Menu & Actualités</h2>
 
-    <div class="menu-actualidade-container">
-      <div class="menu-image-section">
-        <img src="menus/menu.jpg" alt="Menu" class="menu-main-image" onclick="openModal(this.src)"
-          style="cursor: pointer; transition: 0.3s;">
+  <div class="menu-actualidade-container">
+
+    <!-- Imagen del menú -->
+    <div class="menu-image-section">
+      <img src="menus/menu.jpg" 
+           alt="Menu" 
+           class="menu-main-image" 
+           onclick="openModal(this.src)"
+           style="cursor: pointer; transition: 0.3s;">
+    </div>
+
+    <!-- Bloque glass de Actualités -->
+    <div class="actualidade-section">
+      <h2 class="section-title">Actualités</h2>
+
+      <div class="actualite-image-box">
+        <img src="actualites/1.jpg" 
+             alt="Actualité" 
+             onclick="openModal(this.src)">
       </div>
+    </div>
 
-      <div class="actualidade-section">
-  <h2 class="section-title">Actualités</h2>
-
-  <div class="actualite-image-box">
-    <img src="actualites/1.jpg" alt="Actualité" onclick="openModal(this.src)">
   </div>
-</div>
+  </section>
         </div>
       </div>
 
@@ -1010,6 +1041,7 @@
 
 
 </html>
+
 
 
 
