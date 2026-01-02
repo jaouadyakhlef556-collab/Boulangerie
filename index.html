@@ -991,14 +991,19 @@
         if (modalImg) { currentScale = 1; lastScale = 1; lastPan = { x: 0, y: 0 }; modalImg.style.transform = '' }
       }
     })();
+    
+  document.querySelectorAll('.zoom-static img').forEach(img => {
+    img.style.cursor = "pointer"; // opcional, queda más profesional
+    img.addEventListener('click', () => openModal(img.src));
+  });
+    
   </script>
-
-  <script>
 
 </body>
 
 
 </html>
+
 
 
 
