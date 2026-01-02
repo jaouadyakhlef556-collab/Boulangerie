@@ -541,11 +541,16 @@
       color: white;
     }
     
-     #header.scrolled {
+    #header.scrolled {
       background-color: rgba(0, 0, 0, 0.85);
       transition: background-color 0.3s ease;
      }
-
+    .body-no-scroll {
+      overflow: hidden;
+      position: fixed;
+      width: 100%;
+     }
+     
 /* MOBILE FIX — TODO LIMPIO Y CORRECTO */
 @media (max-width: 768px) {
 
@@ -686,8 +691,10 @@
     display: none;
   } 
 
-  .parallax-bg {
+ .parallax-bg {
     background-attachment: scroll !important;
+    background-position: center !important;
+    background-size: cover !important;
   }
 }
 
@@ -701,7 +708,7 @@
     <nav>
       <a href="#inicio">Accueil</a>
       <a href="#apropos">À propos</a>
-      <a href="#menu & Actualités">Menu & Actualités</a>
+      <a href="#menu">Menu & Actualités</a>
       <a href="#produits">Produits</a>
       <a href="#photos">Photos</a>
       <a href="#contact">Contact</a>
@@ -865,164 +872,178 @@
     <p>L'Instant Gourmand - COPYRIGHT 2026</p>
   </footer>
 
-  <script>
-    // Scroll header effect
+  <script>    
+/* ============================
+   HEADER SCROLL EFFECT
+============================ */
 window.addEventListener("scroll", () => {
   const header = document.getElementById("header");
-  if (window.scrollY > 50) {
-    header.classList.add("scrolled");
-  } else {
-    header.classList.remove("scrolled");
-  }
+  if (window.scrollY > 50) header.classList.add("scrolled");
+  else header.classList.remove("scrolled");
 });
-    // Modal functions
-    function openModal(src) {
-      const modal = document.getElementById("modal");
-      const modalImg = document.getElementById("modal-img");
-      modalImg.src = src;
-      modal.classList.add("active");
-      // Sur mobile : empêcher le scroll du body. Sur PC : autoriser le scroll interne du modal.
-      if (window.innerWidth <= 768) {
-        document.body.style.overflow = "hidden";
-      } else {
-        document.body.style.overflow = "auto";
-      }
+
+/* ============================
+   MODAL OPEN / CLOSE
+============================ */
+function openModal(src) {
+  const modal = document.getElementById("modal");
+  const modalImg = document.getElementById("modal-img");
+
+  modalImg.src = src;
+  modal.classList.add("active");
+
+  // Disable body scroll on mobile
+  if (window.innerWidth <= 768) {
+    document.body.classList.add("body-no-scroll");
+  }
+}
+
+function closeModal() {
+  const modal = document.getElementById("modal");
+  modal.classList.remove("active");
+  document.body.classList.remove("body-no-scroll");
+}
+
+// Close modal when clicking outside image
+document.getElementById("modal").addEventListener("click", (e) => {
+  if (e.target.id === "modal") closeModal();
+});
+
+// Close modal with ESC
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeModal();
+});
+
+/* ============================
+   PINCH-TO-ZOOM (MOBILE)
+============================ */
+(function () {
+  let modalImg = document.getElementById('modal-img');
+  let isPinching = false;
+  let startDist = 0;
+  let lastScale = 1;
+  let currentScale = 1;
+
+  let isPanning = false;
+  let startPan = { x: 0, y: 0 };
+  let lastPan = { x: 0, y: 0 };
+
+  let lastTap = 0;
+
+  function getDist(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.hypot(dx, dy);
+  }
+
+  function setTransform() {
+    modalImg.style.transform =
+      `translate(${lastPan.x}px, ${lastPan.y}px) scale(${currentScale})`;
+  }
+
+  function onTouchStart(e) {
+    if (window.innerWidth > 768) return;
+    if (!modalImg) return;
+
+    // Pinch
+    if (e.touches.length === 2) {
+      isPinching = true;
+      startDist = getDist(e.touches);
+      lastScale = currentScale;
+      e.preventDefault();
     }
 
-    function closeModal() {
-      const modal = document.getElementById("modal");
-      modal.classList.remove("active");
-      document.body.style.overflow = "auto";
+    // Pan
+    else if (e.touches.length === 1 && currentScale > 1) {
+      isPanning = true;
+      startPan = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      e.preventDefault();
     }
 
-    document.getElementById("modal").addEventListener("click", (e) => {
-      if (e.target.id === "modal") closeModal();
-    });
+    // Double tap reset
+    const now = Date.now();
+    if (e.touches.length === 1 && now - lastTap < 300) {
+      currentScale = 1;
+      lastScale = 1;
+      lastPan = { x: 0, y: 0 };
+      startPan = { x: 0, y: 0 };
+      setTransform();
+    }
+    lastTap = now;
+  }
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeModal();
-    });
+  function onTouchMove(e) {
+    if (window.innerWidth > 768) return;
 
-    // Pinch-to-zoom and pan for modal image (mobile only)
-    (function () {
-      let modalImg = document.getElementById('modal-img');
-      let isPinching = false;
-      let startDist = 0;
-      let lastScale = 1;
-      let currentScale = 1;
-      let isPanning = false;
-      let startPan = { x: 0, y: 0 };
-      let lastPan = { x: 0, y: 0 };
-      let lastTap = 0;
+    // Pinch
+    if (isPinching && e.touches.length === 2) {
+      const dist = getDist(e.touches);
+      let scale = lastScale * (dist / startDist);
+      scale = Math.max(1, Math.min(scale, 4));
+      currentScale = scale;
+      setTransform();
+      e.preventDefault();
+    }
 
-      function getDist(touches) {
-        const dx = touches[0].clientX - touches[1].clientX;
-        const dy = touches[0].clientY - touches[1].clientY;
-        return Math.hypot(dx, dy);
-      }
+    // Pan
+    else if (isPanning && e.touches.length === 1) {
+      const dx = e.touches[0].clientX - startPan.x;
+      const dy = e.touches[0].clientY - startPan.y;
 
-      function getMid(touches) {
-        return {
-          x: (touches[0].clientX + touches[1].clientX) / 2,
-          y: (touches[0].clientY + touches[1].clientY) / 2
-        };
-      }
+      lastPan = { x: lastPan.x + dx, y: lastPan.y + dy };
+      startPan = { x: e.touches[0].clientX, y: e.touches[0].clientY };
 
-      function setTransform() {
-        modalImg.style.transform = `translate(${lastPan.x}px, ${lastPan.y}px) scale(${currentScale})`;
-      }
+      setTransform();
+      e.preventDefault();
+    }
+  }
 
-      function onTouchStart(e) {
-        if (window.innerWidth > 768) return; // desktop: do nothing
-        if (!modalImg) return;
-        if (e.touches.length === 2) {
-          isPinching = true;
-          startDist = getDist(e.touches);
-          lastScale = currentScale;
-          e.preventDefault();
-        else if (e.touches.length === 1 && currentScale > 1) {
-          isPanning = true;
-          startPan = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-          e.preventDefault();
-        }
-        */
+  function onTouchEnd() {
+    if (window.innerWidth > 768) return;
 
-        // double-tap to reset
-        const now = Date.now();
-        if (e.touches.length === 1 && now - lastTap < 300) {
-          // reset
-          currentScale = 1; lastScale = 1; lastPan = { x: 0, y: 0 }; startPan = { x: 0, y: 0 };
-          setTransform();
-        }
-        lastTap = now;
-      }
+    if (isPinching) isPinching = false;
+    if (isPanning) isPanning = false;
+  }
 
-      function onTouchMove(e) {
-        if (window.innerWidth > 768) return;
-        if (isPinching && e.touches.length === 2) {
-          const dist = getDist(e.touches);
-          let scale = lastScale * (dist / startDist);
-          scale = Math.max(1, Math.min(scale, 4));
-          currentScale = scale;
-          setTransform();
-          e.preventDefault();
-       else if (isPanning && e.touches.length === 1) {
-           const dx = e.touches[0].clientX - startPan.x;
-           const dy = e.touches[0].clientY - startPan.y;
-           lastPan = { x: lastPan.x + dx, y: lastPan.y + dy };
-           startPan = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-           setTransform();
-           e.preventDefault();
-         }
+  // Attach listeners
+  document.addEventListener('touchstart', (e) => {
+    if (!modal.classList.contains('active')) return;
+    onTouchStart(e);
+  }, { passive: true });
 
-      function onTouchEnd(e) {
-        if (window.innerWidth > 768) return;
-        if (isPinching) {
-          isPinching = false;
-          lastScale = currentScale;
-        }
-        if (isPanning) {
-          isPanning = false;
-        }
-      }
+  document.addEventListener('touchmove', (e) => {
+    if (!modal.classList.contains('active')) return;
+    onTouchMove(e);
+  }, { passive: false });
 
-      // Attach listeners when modal opens and remove when closed
-      const modal = document.getElementById('modal');
-      modal.addEventListener('transitionstart', () => { });
-      modal.addEventListener('click', () => { });
+  document.addEventListener('touchend', (e) => {
+    if (!modal.classList.contains('active')) return;
+    onTouchEnd(e);
+  });
 
-      // Use event delegation: always have handlers but they only act on mobile when modal active
-      document.addEventListener('touchstart', function (e) {
-        if (!modal.classList.contains('active')) return;
-        onTouchStart(e);
-      }, { passive: true });
+  // Reset zoom on close
+  const originalClose = window.closeModal;
+  window.closeModal = function () {
+    originalClose();
+    currentScale = 1;
+    lastScale = 1;
+    lastPan = { x: 0, y: 0 };
+    modalImg.style.transform = "";
+  };
+})();
 
-      document.addEventListener('touchmove', function (e) {
-        if (!modal.classList.contains('active')) return;
-        onTouchMove(e);
-      }, { passive: false });
-
-      document.addEventListener('touchend', function (e) {
-        if (!modal.classList.contains('active')) return;
-        onTouchEnd(e);
-      });
-
-      // Reset transform on close
-      const origClose = window.closeModal;
-      window.closeModal = function () {
-        origClose();
-        if (modalImg) { currentScale = 1; lastScale = 1; lastPan = { x: 0, y: 0 }; modalImg.style.transform = '' }
-      }
-    })();
-    
-  document.querySelectorAll('.zoom-static img').forEach(img => {
-    img.style.cursor = "pointer"; // opcional, queda más profesional
-      img.addEventListener('click', () => openModal(img.src));
-    }); 
-  </script>
+/* ============================
+   CLICK TO OPEN MODAL
+============================ */
+document.querySelectorAll('.menu-section .zoom-static img').forEach(img => {
+  img.style.cursor = "pointer";
+  img.addEventListener('click', () => openModal(img.src));
+});
+</script>
   
 </body>
 </html>
+
 
 
 
